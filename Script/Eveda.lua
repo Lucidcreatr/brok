@@ -1,108 +1,85 @@
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
+-- Rayfield yükleniyor
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local Window = OrionLib:MakeWindow({
-	Name = "Evade - LCX TEAM HACK",
-	HidePremium = false,
-	SaveConfig = true,
-	ConfigFolder = "EvadeDraconisConfig"
+-- Pencere oluşturuluyor
+local Window = Rayfield:CreateWindow({
+    Name = "Evade - LCX TEAM HACK",
+    LoadingTitle = "LCX SYSTEM",
+    LoadingSubtitle = "by Draconis",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "EvadeDraconisConfig",
+        FileName = "LCXGUI"
+    },
+    Discord = {
+        Enabled = false
+    },
+    KeySystem = false,
 })
 
-local MainTab = Window:MakeTab({
-	Name = "Ana Panel",
-	Icon = "rbxassetid://4483345998",
-	PremiumOnly = false
-})
+-- Sekme
+local MainTab = Window:CreateTab("Ana Panel", 4483345998)
 
--- Güvenli Humanoid erişimi
-local function getHumanoid()
-	local plr = game.Players.LocalPlayer
-	local char = plr.Character or plr.CharacterAdded:Wait()
-	return char:WaitForChild("Humanoid"), char
-end
-
--- Speed Hack
+-- Speed Değeri
 local targetSpeed = 16
-MainTab:AddSlider({
-	Name = "Speed Hack",
-	Min = 16,
-	Max = 150,
-	Default = 16,
-	Color = Color3.fromRGB(255, 255, 255),
-	Increment = 1,
-	ValueName = "Speed",
-	Callback = function(Value)
-		targetSpeed = Value
-	end
+local SpeedSlider = MainTab:CreateSlider({
+    Name = "Speed Hack",
+    Range = {16, 150},
+    Increment = 1,
+    Suffix = "Speed",
+    CurrentValue = 16,
+    Callback = function(Value)
+        targetSpeed = Value
+    end,
 })
 
--- Jump Hack
+-- Jump Değeri
 local targetJump = 50
-MainTab:AddSlider({
-	Name = "Jump Hack",
-	Min = 50,
-	Max = 250,
-	Default = 50,
-	Color = Color3.fromRGB(255, 255, 255),
-	Increment = 1,
-	ValueName = "JumpPower",
-	Callback = function(Value)
-		targetJump = Value
-	end
+local JumpSlider = MainTab:CreateSlider({
+    Name = "Jump Hack",
+    Range = {50, 250},
+    Increment = 1,
+    Suffix = "Jump",
+    CurrentValue = 50,
+    Callback = function(Value)
+        targetJump = Value
+    end,
 })
 
--- Değerleri anti-cheat’e karşı sürekli sabitle
+-- Sürekli olarak değerleri güncelle (anti-anti-cheat için)
 game:GetService("RunService").RenderStepped:Connect(function()
-	local humanoid = getHumanoid()
-	if humanoid then
-		if humanoid.WalkSpeed ~= targetSpeed then
-			humanoid.WalkSpeed = targetSpeed
-		end
-		if humanoid.JumpPower ~= targetJump then
-			humanoid.JumpPower = targetJump
-		end
-	end
+    local plr = game.Players.LocalPlayer
+    local char = plr.Character or plr.CharacterAdded:Wait()
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.WalkSpeed = targetSpeed
+        humanoid.JumpPower = targetJump
+    end
 end)
 
--- Fly sistemi
-local flyEnabled = false
-local function addFly(char)
-	local root = char:WaitForChild("HumanoidRootPart")
-	if not root:FindFirstChild("EvadeFLY") then
-		local bv = Instance.new("BodyVelocity")
-		bv.Name = "EvadeFLY"
-		bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-		bv.Velocity = Vector3.new(0, 50, 0)
-		bv.Parent = root
-	end
-end
-
-MainTab:AddToggle({
-	Name = "Fly hack (Beta)",
-	Default = false,
-	Callback = function(state)
-		local plr = game.Players.LocalPlayer
-		flyEnabled = state
-
-		if flyEnabled then
-			addFly(plr.Character or plr.CharacterAdded:Wait())
-			plr.CharacterAdded:Connect(function(char)
-				if flyEnabled then
-					wait(1)
-					addFly(char)
-				end
-			end)
-		else
-			local char = plr.Character
-			if char then
-				local fly = char:FindFirstChild("HumanoidRootPart"):FindFirstChild("EvadeFLY")
-				if fly then
-					fly:Destroy()
-				end
-			end
-		end
-	end
+-- Fly özelliği
+local flying = false
+local FlyToggle = MainTab:CreateToggle({
+    Name = "Fly Hack (Beta)",
+    CurrentValue = false,
+    Callback = function(Value)
+        local plr = game.Players.LocalPlayer
+        local char = plr.Character or plr.CharacterAdded:Wait()
+        local root = char:WaitForChild("HumanoidRootPart")
+        if Value then
+            flying = true
+            local bv = Instance.new("BodyVelocity")
+            bv.Name = "EvadeFLY"
+            bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            bv.Velocity = Vector3.new(0, 50, 0)
+            bv.Parent = root
+        else
+            flying = false
+            local fly = root:FindFirstChild("EvadeFLY")
+            if fly then fly:Destroy() end
+        end
+    end,
 })
 
-MainTab:AddParagraph("Uyarı", "Hile şuanda ACC nedeniyle kötü veya hatalı çalışabilir. LCX ekibimiz en yakın zamanda çözecektir.")
-
-OrionLib:Init()
+-- Uyarı
+MainTab:CreateParagraph({Title = "Uyarı", Content = "Fly bazı yerlerde çalışmayabilir. LCX yakında güncelleyecek."})
